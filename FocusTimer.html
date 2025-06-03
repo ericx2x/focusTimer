@@ -35,8 +35,8 @@
       align-items: center;
     }
 
-    input[type="number"] {
-      width: 60px;
+    input[type="number"], input[type="text"] {
+      width: 100px;
       padding: 0.5rem;
       font-size: 1rem;
     }
@@ -59,6 +59,50 @@
       font-size: 3rem;
       margin: 1rem 0;
     }
+
+    .music-link {
+      margin-top: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .music-link a {
+      color: #00f0ff;
+      text-decoration: none;
+      font-size: 1rem;
+    }
+
+    #musicInput {
+      width: 0;
+      opacity: 0;
+      transition: width 0.3s ease, opacity 0.3s ease;
+      overflow: hidden;
+      padding: 0.5rem;
+      font-size: 1rem;
+    }
+
+    #musicInput.expanded {
+      width: 300px;
+      opacity: 1;
+    }
+
+    .music-editor {
+      display: flex;
+      align-items: center;
+      background-color: #16213e;
+      border-radius: 5px;
+      padding: 0.25rem;
+    }
+
+    .icon-button {
+      background: none;
+      border: none;
+      color: #00f0ff;
+      cursor: pointer;
+      font-size: 1.2rem;
+      padding: 0 0.5rem;
+    }
   </style>
 </head>
 <body>
@@ -78,11 +122,20 @@
     <div class="input-group">
       <button onclick="startTimer()">Start</button>
       <button onclick="stopTimer()">Stop</button>
+      <button onclick="resetToTenMinutes()">Reset to 10:00</button>
       <button onclick="toggleRepeat()" id="repeatBtn">Repeat: Off</button>
     </div>
   </div>
 
   <div class="timer-display" id="timer">00:00</div>
+
+  <div class="music-link">
+    <a href="https://www.youtube.com/watch?v=5qap5aO4i9A" target="_blank" id="musicLink">Concentration Music</a>
+    <div class="music-editor">
+      <button class="icon-button" onclick="toggleMusicInput()">✏️</button>
+      <input id="musicInput" type="text" placeholder="Enter music URL" onblur="saveMusicLink(this.value)">
+    </div>
+  </div>
 
   <audio id="cue"></audio>
 
@@ -93,6 +146,13 @@
     let repeatEnabled = false;
     const audioElement = document.getElementById('cue');
     const repeatBtn = document.getElementById('repeatBtn');
+    const musicLink = document.getElementById('musicLink');
+    const musicInput = document.getElementById('musicInput');
+
+    const savedMusicURL = localStorage.getItem('musicURL');
+    if (savedMusicURL) {
+      musicLink.href = savedMusicURL;
+    }
 
     document.getElementById('audioFile').addEventListener('change', function(event) {
       const file = event.target.files[0];
@@ -120,7 +180,7 @@
           clearInterval(timerInterval);
           audioElement.play().catch(error => console.log('Audio play failed:', error));
           if (repeatEnabled) {
-            setTimeout(startTimer, 1000); // brief pause before restarting
+            setTimeout(startTimer, 1000);
           }
         }
       }, 1000);
@@ -129,6 +189,12 @@
     function stopTimer() {
       clearInterval(timerInterval);
       document.getElementById('timer').textContent = "00:00";
+    }
+
+    function resetToTenMinutes() {
+      document.getElementById('minutes').value = 10;
+      document.getElementById('seconds').value = 0;
+      document.getElementById('timer').textContent = "10:00";
     }
 
     function toggleRepeat() {
@@ -141,6 +207,24 @@
       const seconds = remainingSeconds % 60;
       document.getElementById('timer').textContent =
         `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    function toggleMusicInput() {
+      if (musicInput.classList.contains('expanded')) {
+        musicInput.classList.remove('expanded');
+      } else {
+        musicInput.classList.add('expanded');
+        musicInput.value = musicLink.href;
+        musicInput.focus();
+      }
+    }
+
+    function saveMusicLink(url) {
+      if (url) {
+        musicLink.href = url;
+        localStorage.setItem('musicURL', url);
+      }
+      musicInput.classList.remove('expanded');
     }
   </script>
 </body>
