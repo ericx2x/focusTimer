@@ -103,6 +103,10 @@
       font-size: 1.2rem;
       padding: 0 0.5rem;
     }
+
+    .repeatBtn{
+      background: green;
+    }
   </style>
 </head>
 <body>
@@ -122,20 +126,29 @@
     <div class="input-group">
       <button onclick="startTimer()">Start</button>
       <button onclick="stopTimer()">Stop</button>
+      <button onclick="toggleRepeat()" class="repeatBtn" id="repeatBtn">Repeat: On</button>
       <button onclick="resetToTenMinutes()">Reset to 10:00</button>
-      <button onclick="toggleRepeat()" id="repeatBtn">Repeat: Off</button>
     </div>
   </div>
 
   <div class="timer-display" id="timer">00:00</div>
 
-  <div class="music-link">
-    <a href="https://www.youtube.com/watch?v=5qap5aO4i9A" target="_blank" id="musicLink">Concentration Music</a>
-    <div class="music-editor">
-      <button class="icon-button" onclick="toggleMusicInput()">✏️</button>
-      <input id="musicInput" type="text" placeholder="Enter music URL" onblur="saveMusicLink(this.value)">
-    </div>
+<div class="music-link">
+  <a href="https://www.youtube.com/results?search_query=concentration+music+" target="_blank" id="musicLink">Concentration Music</a>
+  <button id="toggleMusic">Embeded</button>
+  <div class="music-editor">
+    <button class="icon-button" onclick="toggleMusicInput()">✏️</button>
+    <input id="musicInput" type="text" placeholder="Enter music URL" onblur="saveMusicLink(this.value)">
   </div>
+</div>
+
+<div id="musicEmbedContainer" style="display: none; margin-top: 1rem;">
+  <iframe id="musicEmbed" width="300" height="170" style="border-radius: 8px; border: none;"
+    src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowfullscreen>
+  </iframe>
+</div>
+
 
   <audio id="cue"></audio>
 
@@ -143,16 +156,11 @@
     let timerInterval;
     let totalSeconds;
     let remainingSeconds;
-    let repeatEnabled = false;
+    let repeatEnabled = true;
     const audioElement = document.getElementById('cue');
     const repeatBtn = document.getElementById('repeatBtn');
     const musicLink = document.getElementById('musicLink');
     const musicInput = document.getElementById('musicInput');
-
-    const savedMusicURL = localStorage.getItem('musicURL');
-    if (savedMusicURL) {
-      musicLink.href = savedMusicURL;
-    }
 
     document.getElementById('audioFile').addEventListener('change', function(event) {
       const file = event.target.files[0];
@@ -200,6 +208,7 @@
     function toggleRepeat() {
       repeatEnabled = !repeatEnabled;
       repeatBtn.textContent = `Repeat: ${repeatEnabled ? 'On' : 'Off'}`;
+      if(repeatEnabled) { repeatBtn.style = `background: green`;} else { repeatBtn.style = `background: red`; }
     }
 
     function updateDisplay() {
@@ -209,23 +218,53 @@
         `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     }
 
-    function toggleMusicInput() {
-      if (musicInput.classList.contains('expanded')) {
-        musicInput.classList.remove('expanded');
-      } else {
-        musicInput.classList.add('expanded');
-        musicInput.value = musicLink.href;
-        musicInput.focus();
-      }
-    }
+function toggleMusicInput() {
+  const saved = localStorage.getItem('musicURL') || '';
+  if (musicInput.classList.contains('expanded')) {
+    musicInput.classList.remove('expanded');
+  } else {
+    musicInput.classList.add('expanded');
+    musicInput.value = saved;
+    musicInput.focus();
+  }
+}
 
-    function saveMusicLink(url) {
-      if (url) {
-        musicLink.href = url;
-        localStorage.setItem('musicURL', url);
-      }
-      musicInput.classList.remove('expanded');
-    }
+
+   function saveMusicLink(url) {
+  if (url) {
+    localStorage.setItem('musicURL', url);
+  }
+  musicInput.classList.remove('expanded');
+}
+
+    const musicEmbedContainer = document.getElementById('musicEmbedContainer');
+const musicEmbed = document.getElementById('musicEmbed');
+const toggleMusicButton = document.getElementById('toggleMusic');
+
+toggleMusicButton.addEventListener('click', () => {
+  const url = localStorage.getItem('musicURL') || musicLink.href;
+  const embedURL = convertToEmbedURL(url);
+  
+  if (musicEmbedContainer.style.display === 'none') {
+    musicEmbed.src = embedURL;
+    musicEmbedContainer.style.display = 'block';
+  } else {
+    musicEmbedContainer.style.display = 'none';
+    musicEmbed.src = '';
+  }
+});
+
+function convertToEmbedURL(url) {
+  // Converts YouTube watch URL to embed URL
+  const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&]+)/;
+  const match = url.match(youtubeRegex);
+  if (match && match[1]) {
+    return `https://www.youtube.com/embed/${match[1]}?autoplay=1`;
+  }
+  // fallback for invalid format or non-YouTube URLs
+  return url;
+}
+
   </script>
 </body>
 </html>
